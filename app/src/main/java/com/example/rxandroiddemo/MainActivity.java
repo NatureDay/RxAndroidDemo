@@ -50,16 +50,17 @@ public class MainActivity extends AppCompatActivity {
 //                doClick11();
 //                doClick12();
 //                doClick13();
-                doClick14();
-                doClick15();
-                doClick16();
-                doClick17();
-                doClick18();
-                doClick19();
-                doClick20();
-                doClick21();
-                doClick22();
-                doClick23();
+//                doClick14();
+//                doClick15();
+//                doClick16();
+//                doClick17();
+//                doClick18();
+//                doClick19();
+//                doClick20();
+//                doClick21();
+//                doClick22();
+//                doClick23();
+                doClick24();
             }
         });
     }
@@ -135,11 +136,11 @@ public class MainActivity extends AppCompatActivity {
                 emitter.onComplete();
             }
         })
+                .subscribeOn(Schedulers.io()) //执行在io线程
                 /**
                  * 回调在主线程
                  */
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribeOn(Schedulers.io()) //执行在io线程
                 .subscribe(new Observer<String>() {
                     @Override
                     public void onSubscribe(Disposable d) {
@@ -556,4 +557,59 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
     }
+
+    /**
+     * 演示下线程切换
+     */
+    @SuppressLint("CheckResult")
+    private void doClick24() {
+        Observable.just(111)
+                .map(new Function<Integer, String>() {
+                    @Override
+                    public String apply(Integer integer) throws Exception {
+                        Log.e("fff", "--doClick24-----map----Thread----" + Thread.currentThread().getName());
+                        return "参数经过(map)" + integer;
+                    }
+                })
+                .flatMap(new Function<String, ObservableSource<String>>() {
+                    @Override
+                    public ObservableSource<String> apply(String s) throws Exception {
+                        Log.e("fff", "--doClick24-----flatMap----Thread----" + Thread.currentThread().getName());
+                        return Observable.just("参数经过(flatMap)" + s);
+                    }
+                })
+                .subscribeOn(Schedulers.io())
+                .map(new Function<String, String>() {
+                    @Override
+                    public String apply(String s) throws Exception {
+                        Log.e("fff", "--doClick24-----map----Thread--222--" + Thread.currentThread().getName());
+                        return "参数再次(map)" + s;
+                    }
+                })
+                .subscribeOn(Schedulers.computation())
+                .map(new Function<String, String>() {
+                    @Override
+                    public String apply(String s) throws Exception {
+                        Log.e("fff", "--doClick24-----map----Thread--333--" + Thread.currentThread().getName());
+                        return "参数再再次(map)" + s;
+                    }
+                })
+                .observeOn(Schedulers.io())
+                .flatMap(new Function<String, ObservableSource<String>>() {
+                    @Override
+                    public ObservableSource<String> apply(String s) throws Exception {
+                        Log.e("fff", "--doClick24-----flatMap----Thread--222--" + Thread.currentThread().getName());
+                        return Observable.just("参数再次经过(flatMap)" + s);
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<String>() {
+                    @Override
+                    public void accept(String s) throws Exception {
+                        Log.e("fff", "--doClick24-----subscribe----Thread----" + Thread.currentThread().getName());
+                        Log.e("fff", "--doClick24-----subscribe----result----" + s);
+                    }
+                });
+    }
+
 }
